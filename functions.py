@@ -1,5 +1,6 @@
 import phonenumbers
 from phonenumbers import geocoder, carrier, timezone
+import json
 
 is_number_valid = None
 is_possible_number = None
@@ -142,3 +143,62 @@ def get_phone_info(phonenumber, country_code):
         case phonenumbers.PhoneNumberType.UNKNOWN:
             number_type = "Bilinmeyen"
     return is_number_valid, is_possible_number, number_type,isp
+
+
+def dummy_get_phone_info(phonenumber):
+    try:
+        response = phonenumbers.parse(f'+{phonenumber}', None)
+        is_number_valid = phonenumbers.is_valid_number(response)
+        if is_number_valid == False:
+            is_possible_number = phonenumbers.is_possible_number(response)
+            match is_possible_number:
+                case True:
+                    is_possible_number = "Mümkün"
+                case False:
+                    is_possible_number = "Mümkün Değil"
+            return {
+                "message": "Böyle Bir Numara Bulunmuyor",
+                "Böyle Bir Numara Olması Mümkün mü?": is_possible_number
+            }
+        else:
+            number_type = phonenumbers.number_type(response)
+            match number_type:
+                case phonenumbers.PhoneNumberType.FIXED_LINE:
+                    number_type = "Sabit Hat"
+                case phonenumbers.PhoneNumberType.MOBILE:
+                    number_type = "Mobil Hat"
+                case phonenumbers.PhoneNumberType.FIXED_LINE_OR_MOBILE:
+                    number_type = "Sabit Hat veya Mobil Hat"
+                case phonenumbers.PhoneNumberType.TOLL_FREE:
+                    number_type = "Ücretsiz Hat"
+                case phonenumbers.PhoneNumberType.PREMIUM_RATE:
+                    number_type = "Premium Hat"
+                case phonenumbers.PhoneNumberType.SHARED_COST:
+                    number_type = "Paylaşımlı Hat"
+                case phonenumbers.PhoneNumberType.VOIP:
+                    number_type = "VoIP"
+                case phonenumbers.PhoneNumberType.PERSONAL_NUMBER:
+                    number_type = "Kişisel Hat"
+                case phonenumbers.PhoneNumberType.PAGER:
+                    number_type = "Pager"
+                case phonenumbers.PhoneNumberType.UAN:
+                    number_type = "UAN"
+                case phonenumbers.PhoneNumberType.UNKNOWN:
+                    number_type = "Bilinmeyen"
+            isp = carrier.name_for_number(response, "tr")
+            match is_number_valid:
+                case True:
+                    is_number_valid = "Geçerli"
+                case False:
+                    is_number_valid = "Geçersiz"
+            return {
+                "message": "Başarılı!",
+                "Bu Numara Geçerli mi?": is_number_valid,
+                "Telefon Numarası": phonenumber,
+                "Numara Türü": number_type,
+                "ISP": isp
+            }
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return {
+            "message": "Geçersiz Numara"
+        }
